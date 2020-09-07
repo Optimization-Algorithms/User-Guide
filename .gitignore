@@ -1,0 +1,13 @@
+*.aux
+*.log
+*.out
+*.pdf
+*.toc
+*.gz
+*.eps
+*.bak
+# adding untracked files on 2020-09-07 10:17
+.gitignore
+build_table.py
+user_guide.lof
+user_guide.lot
