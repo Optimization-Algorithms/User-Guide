@@ -1,0 +1,220 @@
+\section{Usage}
+
+    ks.py is straightforward to use. ks.py provides a CLI interface, so it can be run from the shell 
+    without the need of a dedicated development environment. ks.py is configured using a YAML
+    \footnote{If you've never eared them take a look at the \href{https://en.wikipedia.org/wiki/YAML}{Wikipedia} page to learn the basic syntax, 
+    this will avoid a lot of issues in a second moment } file,
+    so it is easy to modify this configuration using any text editor. ks.py should be configured using its configuration file and not by modifying 
+    its source code. 
+
+    \subsection{Running}
+
+        Run ks.py is equivalent on any platform. Open a shell, go to ks.py root directory and using \textbf{python} (or \textbf{py} on some Windows installation) run:
+        \begin{lstlisting}
+            python ks.py -h
+        \end{lstlisting}
+        This command will print on the screen the help message and immediately exit. As you can see ks.py expects a mandatory file, the instance file (usually .mps) and 
+        an optional argument introduced with the flag \textbf{-c}, this is the configuration file (must be a YAML file). ks.py does not requires some names or extensions the important
+        thing is that those files are correctly formatted. If you omit the configuration file ks.py uses its default configuration, in order to solve the instance \emph{problem.mps} use 
+        the command:
+        \begin{lstlisting}
+            python ks.py problem.mps
+        \end{lstlisting}
+        ks.py default configuration may vary inadvertently with the version so you are highly discouraged from using it.
+
+        In order to specify a configuration use this command:
+        \begin{lstlisting}
+            python ks.py -c config.yml problem.mps
+        \end{lstlisting}
+        Supposing that your configuration is in a file named \emph{config.yml} and your problem is in a file named \emph{problem.mps}. Remember instance and configuration file names are irrelevant
+        to ks.py as the order you provide them.
+
+        It is very likely that your configuration is unfortunate and is unable to provide solution in an acceptable amount of time. In this case you can arrest ks.py sending an interrupt signal 
+        (on most platforms is \texttt{CTRL+C}), this will hardly kill the process so any progress is lost. 
+
+        \subsubsection{Troubleshooting}
+            Here I'll consider that the installation is correct, so any issue described in this section is due to error that may happen during the execution.
+            Some common issues are:
+            \begin{enumerate}
+                \item Configuration fails to load: it is due to syntax error in the configuration file or to mismatched parameter type. Check the your configuration file
+                follows the YAML syntax and that any value is correctly set
+                \item Instance fail to load: this is a rare event, usually caused by a malformed mps (or analogous) file. Read the log error for more information.
+                \item File not found: if configuration or instance file is not in the current working directory ks.py is not able to magically locate it. If you keep your 
+                configuration or instances into an other directory you must use a fully qualified path. 
+            \end{enumerate}
+
+
+    \subsection{Configuration}
+        To obtain some valuable results from ks.py, so a good objective value in a short amount of time, it is important to define a proper configuration file. 
+        The configuration file is made of key-value pairs. 
+        ks.py contains an example of configuration file. You can use it or keep it as a guide. In the rest of this section any configuration parameter will be 
+        explained in detail. Some parameter are mandatory in certain contexts, other are always optional. The following table contains the list of currently 
+        available commands. It is just a simple recap to remember any attribute type.
+  
+        \newpage
+
+        \begin{table}[h]
+            \centering
+            \caption{Configuration parameters}
+            \begin{tabular}{ | l | l | l | }
+                \hline
+                Attribute & Sub attribute & Type \\
+                \hline
+                \hline
+                PRELOAD& & boolean\\ 
+                \hline
+                 LOG& & boolean\\ 
+                \hline
+                 BUCKET& & string\\ 
+                \hline
+                BUCKET\_CONF & & structured\\ 
+                \hline
+                & count & integer\\ 
+                \hline
+                & size & integer\\ 
+                \hline
+                 ITERATIONS& & integer\\ 
+                \hline
+                 DEBUG& & string\\ 
+                \hline
+                 SOLUTION\_FILE& & string\\ 
+                \hline
+                 MIP\_GAP& & float\\ 
+                \hline
+                FEATURE\_KERNEL & & structured\\ 
+                \hline
+                & COUNT & integer\\ 
+                \hline
+                & MIN\_TIME & integer\\ 
+                \hline
+                & MAX\_TIME & integer\\ 
+                \hline
+                & POLICY & string\\ 
+                \hline
+                & LOG\_FILE & string\\ 
+                \hline
+                & CACHE\_FILE & string\\ 
+                \hline        
+            \end{tabular}
+            \label{tab:params}
+        \end{table}
+    
+        \subsubsection{Parameter Details}
+    
+        \begin{itemize}
+            \item PRELOAD: specify to ks.py if preset the current solution using the previous solution (from  previous bucket, initial kernel or from file).
+            \item LOG: specify to ks.py to enable or disable Gurobi log, if \textbf{on} the execution is very verbose and rich of potentially useful information.
+            \item BUCKET: specify to ks.py how to build the buckets.
+            \item BUCKET\_CONF : specify the bucket builder configuration
+            \begin{itemize}
+               \item count: specify to the bucket builder the number of buckets. If size is set this parameter should not be set
+               \item size: specify bucket size. If count is set this parameter should not be set 
+            \end{itemize}
+            \item ITERATIONS: specify to ks.py how many bucket iteration to perform
+            \item DEBUG: specify ks.py the optional debug file. It is a CSV file containing the convergence story from bucket iteration
+            \item SOLUTION\_FILE: specify ks.py the optional solution file. It is a Gurobi SOL file, a simple text file containing on each line
+            a couple \emph{variable name} - \emph{value}, useful also for successive execution.
+            \item MIP\_GAP: specify the minimal mip gap, as a percentage value, when it goes under this level the solution is considered optimal. The current \emph{mip\_gap}
+            is computed as:
+            \begin{align*}
+                &\frac{UB - LB}{|UB|}\\
+                Where:&\\
+                &UB \text{ is the current upper objective bound}\\
+                &LB \text{ is the current lower objective bound}\\
+            \end{align*} 
+            So the current sub problem is considered solved at optimal if
+            \begin{align*}
+                &\frac{UB - LB}{|UB|} < MIP\_GAP
+            \end{align*} 
+            and terminate the execution.
+
+            \item FEATURE\_KERNEL : use feature kernel to build the initial kernel instead of the kernel build from base variables in the LP relaxation.
+            \begin{itemize}
+               \item COUNT: specify the number of random sub problem to run and use to compute the initial kernel ,
+               \item MIN\_TIME: specify the starting time, in seconds, to solve a random sub problem. If MAX\_TIME is set also MIN\_TIME must be set
+               \item MAX\_TIME: specify the maximum time, in seconds, to solve a random sub problem. If MIN\_TIME is set also MAX\_TIME must be set
+               \item POLICY: specify the policy used to find the size of the initial kernel.
+               \item LOG\_FILE: specify the optional file name of the feature kernel log file, it is a CSV file containing the status of each sub problem.
+               \item CACHE\_FILE: specify the optional file name of the sub problem cache file. This file contains any sub problem, with variable values and 
+               optimization status.
+            \end{itemize}
+         \end{itemize}
+
+
+        
+        \subsubsection{Parameter Details}
+        Some parameters requires a more rich description. 
+        \paragraph{BUCKET} specify the method used to build the bucket. The available method are described in Table \ref{tab:bucket}
+
+        \begin{table}[ht]
+            \centering
+           \caption{BUCKET Values}
+           \begin{tabular}{|l|l|}
+               \hline 
+               Value & Description \\
+               \hline
+               \hline
+               fixed & Create a set of fixed size buckets\\
+               \hline
+               decrease & Create a set of decreasing size buckets\\
+               &  each bucket size double the size of its successor\\
+               \hline
+           \end{tabular}
+           \label{tab:bucket}
+        \end{table}
+
+        Each method supports the same \textbf{BUCKET\_CONF}. In any case if you set \emph{count} ks.py will create \emph{count} buckets the size 
+        of each bucket is automatically calculated according to specified method and the number of variables outside kernel.
+        If you specify \emph{size} the behavior with \emph{fixed} is obvious, ks.py will create a number of buckets each with \emph{size} variables but
+        with \emph{decrease} it is less obvious: in this case ks.py uses \emph{size} as the size of the smallest bucket (the last one), then according to
+        this size it will compute the correct number of bucket. Any eventually remainder is put into the last bucket. 
+
+        It is possible that the configuration (especially when using \emph{size}) requires more buckets then the bucket outside the kernel. In this case 
+        ks.py detects the error and immediately stops the execution. This is considered as an error so the initial kernel is not kept, unless using Feature Kernel
+        with \textbf{CACHE\_FILE} set.
+
+
+
+        \paragraph{Output Files} ks.py can optionally output four file. Each file has a fixed format and cannot be changed by the configuration file. Any file 
+        name will be blindly accepted by ks.py, so some point must be understood.
+        \begin{itemize}
+            \item Running ks.py without changing file names will cause ks.py to overwrite the previous contents, leading into an unrepeatable lost. Is up to 
+            you to properly reconfigure, rename or store the files.
+            \item File extension is meaningless to ks.py, you should pay attention to the extensions so the system can handle the files properly.
+        \end{itemize} 
+
+
+        Any output file is in a public domain format and can be opened with many software, both open source and proprietary. The only non textual file 
+        is the \textbf{CACHE\_FILE} which is a \href{https://docs.python.org/3/library/pickle.html}{pickle} file, the default serialization library in Python.
+        \href{https://en.wikipedia.org/wiki/Comma-separated_values}{CSV} are used because this format is very easy to parse with almost any  programming language, 
+        and most of the languages already have a library to parse them. It is also possible to open CSV using tools like \href{https://docs.google.com/spreadsheets}{Google Sheets}. 
+      
+        \begin{table}[ht]
+            \centering
+            \caption{File type description}
+            \begin{tabular}{|l|l|}
+                \hline
+                Parameter & Type \\
+                \hline 
+                DEBUG & CVS - Textual\\
+                \hline 
+                SOLUTION\_FILE & SOL - Textual\\
+                \hline 
+                LOG\_FILE & CSV - Textual \\
+                \hline 
+                CACHE\_FILE & Pickle - Binary \\
+                \hline
+            \end{tabular}
+            \label{tab:file_decr1}
+        \end{table}
+
+        How to properly analyze and understand the contents of this file, especially DEBUG and LOG\_FILE, will be explained in the following session.
+
+
+        \subsubsection{Troubleshooting}
+        Although YAML syntax does not check for types, ks.py does. A common problem that may arise is a mistypes parameter value, infarct to ks.py $4$ and $4.0$
+        is not the same value nor the same type. So where Table \ref{tab:params} specifies a \emph{float} always add a decimal part (eventually $.0$), when a \emph{string} 
+        is required always add marks and avoid decimal part for \emph{integers}.
+
+        Other configuration may result into an undesired behavior, like been stuck into some slowly converging solution. This is not a real \emph{error} but more 
+        an unfortunate condition that must be addressed by changing the configuration.

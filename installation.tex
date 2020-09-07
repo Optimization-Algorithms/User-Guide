@@ -1,0 +1,83 @@
+
+\section{Installation}
+
+    ks.py is a kernel search implementation written in Python, using Gurobi as back end MIP solver. In order to use it, you must
+    install both Python 3.8, or above, and  Gurobi 9 and some other dependencies. Gurobi is the only commercial software used by ks.py. 
+    ks.py can be used on any system supported by gurobipy (Gurobi's python bindings).
+    
+    \subsection{Install Python}
+        The Python interpreter can be freely downloaded from the \href{https://www.python.org/}{official website}. It is mandatory to install 
+        the 64 bit version, otherwise Gurobi cannot be linked to the interpreter. If it is possible to install Python 3.8 using your system's
+        package manager, feel free to install with this method. Ensure to also install Pip with Python. Pip is the official Python's package manager,
+        the third party library installer, it is needed to install ks.py dependencies.
+
+        ks.py can be downloaded from \href{https://github.com/FilippoRanza/ks.py}{the official repository}. My advice is to download the most stable 
+        version that fit your needs. So first consider to download the last stable \href{https://github.com/FilippoRanza/ks.py/releases}{tag}, if this is not enough download the last commit on 
+        \href{https://github.com/FilippoRanza/ks.py/archive/master.zip}{master}. Avoid 
+        the other branches especially the failing ones, unless you are considering to contribute to the project. It is possible to download ks.py anywhere 
+        in your file system, but consider the it can be run (without issues) only from it's root directory.
+
+        Once you've downloaded ks.py and place it into a proper location it's time to install ks.py dependencies. This is done using pip. 
+        Open your system shell, Powershell on Windows, Terminal on Unix. Change directory \footnote{Usually in the file manager there is the possibility 
+        to \emph{open a terminal here}. Otherwise in the file manager copy the path, open a shell, write \textbf{cd} a space and paste the path} where you've downloaded ks.py, there run this 
+        command. 
+        \begin{lstlisting}
+            pip install -r requirements.txt
+        \end{lstlisting}
+        This may take a while. Be patient. This command can be run as standard or super user. In the first case this libraries will be installed locally to the 
+        current user, in the second globally. This is up to you.
+
+        \subsubsection{Troubleshooting}
+            This is a good point to test your python installation.  A quick way to do this consist in opening a shell and run the command \textbf{python} (on Windows it may be \textbf{py}),
+            at this point you should carefully check the banner printed by the python interpreter. There you must check that the version is 3.8 o above and that you are 
+            using a 64 bit installation. Once done you can safely close the window. 
+
+            It is possible for this procedure to fail or not be 100\% smooth. Some common issues are:
+            \begin{enumerate}
+                \item Pip is not installed: depending on your system and on your chosen installation method it is possible that pip is not installed as a
+                separate command. In this scenario usually pip is installed as a python's sub module. So the command above becomes
+               \begin{lstlisting}
+    python -m pip install -r requirements.txt
+                \end{lstlisting}
+                
+                \item On Windows the command \textbf{python} results in a \emph{command not found}: some installers on Windows install python as \textbf{py} 
+                \item pip module not found: some installers are more minimalist then others, so it is possible that pip is not installed with python by default
+                try to check again your installer's guide to see how to install pip.
+            \end{enumerate}
+
+    \subsection{Install Gurobi}
+        Before installing Gurobi you must obtain a license, check on \href{https://www.gurobi.com/}{the official website}. Once you've obtained a license you can proceed 
+        installing, and activating, Gurobi for your platform. Once done, it comes the trickiest step in this configuration: installing gurobipy, the official python bindings 
+        for gurobi. This step can be done in to ways:
+            \begin{itemize}
+                \item The minimalist: using your system's cli shell change directory to Gurobi installation root\footnote{\href{https://packages.gurobi.com/9.0/README.txt}{Check here}}. There search for the file \emph{setup.py}. Once found run this command
+                \begin{lstlisting}
+    python setup.py install
+                \end{lstlisting}
+                once this is done, it is pretty fast, gurobipy is installed and ready.
+                \item The easier: install the anaconda package manager, a third party python package manager, 
+                and follow the \href{https://www.gurobi.com/documentation/9.0/quickstart_mac/ins_the_anaconda_python_di.html}{instruction} 
+                provided by Gurobi.
+            \end{itemize}
+
+
+
+            \subsubsection{Troubleshooting}
+                This is a good moment for testing gurobipy. A quick way to test it is to open a python interactive shell and import gurobipy. Open a python shell as before and 
+                insert:
+                \begin{lstlisting}
+    import gurobipy
+                \end{lstlisting}
+                At this point if there are no message are shown you've correctly installed python and gurobipy. If the interpreter shows a message saying \emph{ModuleNotFoundError}
+                this means that the gurobipy is not installed. In both cases you can safely close the window.\\ Some common issues are:
+                \begin{enumerate}
+                    \item wrong python version: especially on Unix is very common to have python already installed, but, except for some Linux distros, this default installation is not Python3.8,
+                    in this scenario is possible that gurobipy is been installed for another python version. Possible fixes:
+                    \begin{enumerate}
+                        \item Change default python version to 3.8
+                        \item Explicitly use python3.8 in lieu of python 
+                        \item If possible remove old python installation (do this only is you are 110\% sure)
+                    \end{enumerate}
+                    \item wrong python compilation: for Windows python is compiled for both 32 and 64 bit. It is a common mistake to install python 32 bit
+                    \item gurobipy is installed but is does not work: check that Gurobi is correctly activated using the \textbf{grbgetkey} command\
+                \end{enumerate}

@@ -1,0 +1,194 @@
+\section{Understanding Results}
+    ks.py optionally produces five different outputs. They are:
+    \begin{enumerate}
+        \item Bucket Convergence History
+        \item Feature Kernel Sub problem Status
+        \item Solution File
+        \item Feature Kernel Cache File 
+        \item Console Log
+    \end{enumerate}
+    
+    \subsubsection{Bucket Convergence History} 
+        This output logs the convergence history of the bucket iteration. It is configured using the parameter 
+        \textbf{DEBUG}, see Table \ref{tab:params}. When this parameter is enabled will log any successful bucket iteration into a CSV file containing the following
+        values:
+            \begin{table}[h]
+                \centering
+                \caption{Debug File Parameters}
+                \begin{tabular}{|l|l|l|}
+                    \hline
+                    Value & Description & Type \\
+                    \hline
+                    \hline
+                    bucket & current bucket id  & Integer\\
+                    \hline
+                    iteration & current iteration  & Integer\\
+                    \hline
+                    value & objective function &  Variable\footnotemark\\
+                    \hline
+                    time & required time, in seconds & Integer \\
+                    \hline
+                    nodes & number of explored nodes & Integer\\
+                    \hline
+                    kernel\_size & number of variable in the kernel & Integer\\
+                    \hline
+                    bucket\_size & number of variable in the current bucket & Integer \\
+                    \hline
+                \end{tabular}
+            \end{table} 
+            \footnotetext{Depends on the specific instance}
+        
+        This file contains various useful clues that will help to understand if the current configuration is good or not. For example is possible to view how the 
+        objective value varies, with the buckets and the time. This should help to address some issues in the bucket structure. Also the number of explored nodes, especially
+        if correlated with the required time can show if the configuration is fine or not. Those data can be collected with data from other executions
+        to understand if the issue in finding a good solution comes from a bad configuration or if the Kernel Search itself is not the right method to solve it.
+
+        Some issues that can be found, and addressed using this data are:
+        \begin{itemize}
+            \item Bucket to small: in this case the objective value does not change by a relevant amount for a lot of iterations.
+            \item Bucket to large: in this case the required time for each single problem is to large and the number of explored nodes is very high
+            \item Mip Gap to small: long execution time and small improvements in the objective function can also mean that the Mip gap is to small. Try to increase it and let
+            be Kernel Search to improve this value not Gurobi
+            \item Too many iterations: it is possible that after a certain point the value of the objective function is stuck to a certain value, this means the ks.py reached a
+            local minima and increasing the number of iteration cannot lead to a better solution. 
+            \item Bucket method is wrong: it is possible that many sub problems are infeasible (they are not shown into the list), in this case is possible that a different 
+            bucket or kernel builder can produce better results
+        \end{itemize}
+
+
+        This are only some of the possible usage of this output data. Depending on the specific instance and values of this data many other information can be gained, especially
+        when considering also other outputs.
+
+    \subsubsection{Feature Kernel Sub problem Status}
+        This output log the final status of each random sub problem. It is configured using the parameter \textbf{LOG\_FILE}, see Table \ref{tab:params}. When this output
+        is enabled it will produce a CSV file made of this fields:
+        \begin{table}[h]
+            \centering
+            \caption{Feature Kernel Log Fields}
+            \begin{tabular}{|l|l|l|}
+                \hline
+                Field & Description & Type \\
+                \hline
+                \hline
+                Iteration & Iteration Index & Integer \\
+                \hline
+                Problem Size & Variables in current sub problem & Integer \\
+                \hline
+                Status & Status of the sub problem & Integer (see \ref{tab:fk-status}) \\
+                \hline
+            \end{tabular}
+        \end{table}
+
+        
+        \begin{table}[h]
+            \centering
+            \caption{Feature Kernel Status}
+            \begin{tabular}{|l|l|}
+                \hline
+                Value & Description \\
+                \hline
+                \hline
+                & problem infeasible \\
+                \hline
+                0 & relaxation feasible, integer infeasible \\
+                \hline
+                1 & integer feasible \\
+                \hline
+                2 & time out \\
+                \hline 
+            \end{tabular}
+            \label{tab:fk-status}
+        \end{table}
+
+
+        Table \ref{tab:fk-status} show the meaning of the various final statuses. This information combined with the size of the 
+        sub problem can provide big hints into the problem. It is possible to understand an approximated threshold of both continuous 
+        and integer feasibility. This value is partially influenced by the timeout values and by the randomness of the method, but if 
+        the number of random sub problems is high enough conclusions from this method can be considered quite correct. 
+
+        It is possible to define the Continuous Feasibility Threshold (CFT) as the average value of the size of sub problems feasible in the continuous but 
+        not in the integer domain divided by the size of the whole model. Analogously it is possible to define Integer Feasibility Threshold (IFT)
+        as the average value of the size of sub problems feasible in the integer domain but domain divided by the size of the whole model. Those two values
+        can provide a good idea about the problem. For example a very high CFT and IFT means that the sub problems hardly lead to feasible solution, so only a 
+        sub problem very close to the whole problem can be feasible. In this case probably Kernel Search is not the right method and is very unlikely that
+        changing some parameters can lead to improvements. On the other side if CFT and IFT are small that means that for this particular problem Kernel Search 
+        can provide a good method to find in a quick time a good solution. 
+
+        It is possible that none of the sub problems results to be continuous or integer feasible (sometimes both) in this case the relative index is simply 
+        undefined. 
+
+        You should also check for \emph{time out} statuses. This means that the given time is not enough and that should be increased. You should start by setting 
+        \emph{min} and \emph{max} to some standard values like 10 seconds and 30 seconds then start adjusting those values accordingly to the final status. 
+        The general rule of the thumb is to increase the \emph{max} time if many problems and with \emph{timeout}, then when the difference between \emph{max} and \emph{min}
+        becomes larger then the number of iteration it is possible to increase \emph{min} time. If you start going to high 
+        probably Feature Kernel is not the right method.
+        
+        The initial count should be set to a value that is not too large nor too small, like 50. Once you start getting some useful results, like a uniform enough distribution
+        of the various statuses, you can consider to increase this number in order to create a large pool of sub problems and create a meaningful initial kernel. 
+
+
+    \subsubsection{Solution File}
+        This output generate a \href{https://en.wikipedia.org/wiki/Sol_(format)}{SOL} file, an open format used to describe the solution of mathematical programming
+        problem. This file is automatically used by ks.py to load a previous solution on the first iteration of successive run, if present. This file can also be 
+        used to export and use the final solution. 
+
+    \subsubsection{Feature Kernel Cache File}
+        This output generate a cache file for the Feature Kernel sub problems. In some cases FK is may take a very long time. This is not an issue by itself, but 
+        when the bucket configuration happens to be wrong (this happens more often then not) recomputing the some initial kernel over and over becomes annoying and
+        time wasteful. To address this issue you can set the cache file and once the initial kernel is satisfying you can (without removing the cache file or touching
+        this parameter) set \textbf{COUNT} to zero. This will create zero sub problem and simply load the previously found and then build the initial kernel from there. 
+        Because those sub problems are randomly generated a configuration cannot be better than the other so
+        the cache file accumulates any generated model, so if you run FK six times with \textbf{COUNT} set to fifty
+        the cache file will contain three hundred sub problems. This trick allows to create the initial kernel once, without the need to recompute it for each different 
+        bucket configuration. 
+
+
+    \subsubsection{Console Log}
+        This output is mainly composed of the Gurobi logs, and some ks.py error messages. At the current time those data can only be accessed as screen log and 
+        the only way to store them all is by piping the stdout into a file. This must be done by the parent program. 
+
+        The Gurobi log contains some of the most useful information. In fact this log contains a detailed convergence history for each Sub problem, both during 
+        the initial kernel generation and during the bucket iterations. A number of very useful information can be obtained looking at this logs:
+        \begin{itemize}
+            \item The MIP Gap is too large: the problem reaches a good solution quickly but then it remains stuck and requires a long time to improve the solution
+            \item The Buckets are misconfigured: this happens when:
+            \begin{itemize}
+                \item it requires a long time to find that this sub problem is infeasible
+                \item it takes a long time to solve a sub problem
+                \item the solution slowly converges
+            \end{itemize}
+            \item Time Limit is to small: some problem cannot be solved because the time limit is too small for this specific instance 
+        \end{itemize}
+
+    
+    \subsubsection{Final Guidelines on Outputs}
+        Except for \emph{solution} and \emph{cache} file that are used to export a result, the other outputs are useful only to guide you to find a 
+        better configuration and to understand if the instance is suitable for Kernel Search or not. In general it is a good idea to keep any output 
+        enabled and take a look at all of them to better understand how to proceed. 
+        My final advice is to start solving some \emph{easy} benchmark instance before solving your real problems, this will give you a bit of experience 
+        in understanding the results from ks.py. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+    
+
+
+
+
+
+
+        
+
+
+    
+
