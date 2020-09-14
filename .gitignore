@@ -11,3 +11,5 @@
 build_table.py
 user_guide.lof
 user_guide.lot
+*fls
+*fdb_latexmk
