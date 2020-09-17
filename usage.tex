@@ -81,6 +81,8 @@
                 \hline
                  MIP\_GAP& & float\\ 
                 \hline
+                TIME\_LIMIT & & integer \\
+                \hline
                 FEATURE\_KERNEL & & structured\\ 
                 \hline
                 & COUNT & integer\\ 
@@ -128,6 +130,8 @@
             \end{align*} 
             and terminate the execution.
 
+            \item TIME\_LIMIT: set global time limit, in seconds. This value is ignored by \textbf{FEATURE\_KERNEL} which uses its own time limits. 
+            
             \item FEATURE\_KERNEL : use feature kernel to build the initial kernel instead of the kernel build from base variables in the LP relaxation.
             \begin{itemize}
                \item COUNT: specify the number of random sub problem to run and use to compute the initial kernel ,
